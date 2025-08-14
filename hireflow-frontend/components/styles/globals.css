@@ -1,0 +1,232 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
+
+export default function ResumeBuilder() {
+  const [uploadedResume, setUploadedResume] = useState<File | null>(null);
+  const [jobUrl, setJobUrl] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const templates = [
+    {
+      id: 'professional',
+      name: 'Professional',
+      description: 'Clean and traditional layout perfect for corporate roles',
+      successRate: 85,
+      bestFor: ['Finance', 'Consulting', 'Management']
+    },
+    {
+      id: 'technical',
+      name: 'Technical',
+      description: 'Designed for engineering and technical positions',
+      successRate: 91,
+      bestFor: ['Software Engineering', 'Data Science', 'DevOps']
+    },
+    {
+      id: 'creative',
+      name: 'Creative',
+      description: 'Modern design for creative and design roles',
+      successRate: 72,
+      bestFor: ['Design', 'Marketing', 'Content Creation']
+    }
+  ];
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setUploadedResume(file);
+    } else {
+      alert('Please upload a PDF file');
+    }
+  };
+
+  const handleJobUrlSubmit = async () => {
+    if (!jobUrl) return;
+    
+    setIsProcessing(true);
+    // Simulate API call to scrape job description
+    setTimeout(() => {
+      setJobDescription(`
+Job Title: Senior Software Engineer
+Company: TechCorp Inc.
+
+Requirements:
+• 5+ years of experience in full-stack development
+• Proficiency in React, Node.js, and TypeScript
+• Experience with cloud platforms (AWS, GCP)
+• Strong problem-solving and communication skills
+• Bachelor's degree in Computer Science or related field
+
+Responsibilities:
+• Lead development of new features and products
+• Mentor junior developers
+• Collaborate with product and design teams
+• Ensure code quality and best practices
+      `.trim());
+      setIsProcessing(false);
+    }, 2000);
+  };
+
+  const handleOptimizeResume = () => {
+    if (!uploadedResume || !selectedTemplate) {
+      alert('Please upload a resume and select a template');
+      return;
+    }
+    
+    setIsProcessing(true);
+    // Simulate resume optimization process
+    setTimeout(() => {
+      alert('Resume optimized successfully! Your tailored resume is ready for download.');
+      setIsProcessing(false);
+    }, 3000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1>Resume Builder</h1>
+        <p className="text-muted-foreground">
+          Upload your resume and optimize it for specific job opportunities
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Resume Upload Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Resume</CardTitle>
+            <CardDescription>Upload your current resume in PDF format</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="resume-upload">Resume File</Label>
+              <Input
+                id="resume-upload"
+                type="file"
+                accept=".pdf"
+                onChange={handleFileUpload}
+                className="mt-1"
+              />
+              {uploadedResume && (
+                <div className="mt-2 p-3 bg-muted rounded-md">
+                  <p className="text-sm font-medium">✓ {uploadedResume.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(uploadedResume.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Job Information Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Job Information</CardTitle>
+            <CardDescription>Add job URL or paste job description</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="job-url">Job URL</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="job-url"
+                  placeholder="https://company.com/job-posting"
+                  value={jobUrl}
+                  onChange={(e) => setJobUrl(e.target.value)}
+                />
+                <Button 
+                  onClick={handleJobUrlSubmit}
+                  disabled={!jobUrl || isProcessing}
+                  variant="outline"
+                >
+                  {isProcessing ? 'Loading...' : 'Scrape'}
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="job-description">Job Description</Label>
+              <Textarea
+                id="job-description"
+                placeholder="If URL scraping doesn't work, paste the job description here..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                className="mt-1 min-h-32"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Template Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Choose Template</CardTitle>
+          <CardDescription>Select a resume template optimized for your target role</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {templates.map((template) => (
+              <div
+                key={template.id}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedTemplate === template.id 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border hover:border-muted-foreground'
+                }`}
+                onClick={() => setSelectedTemplate(template.id)}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">{template.name}</h3>
+                    <Badge variant="outline">{template.successRate}% success</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{template.description}</p>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Best for:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {template.bestFor.map((field, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {field}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button 
+              onClick={handleOptimizeResume}
+              disabled={!uploadedResume || !selectedTemplate || isProcessing}
+              className="flex-1"
+            >
+              {isProcessing ? 'Optimizing Resume...' : 'Optimize Resume for Job'}
+            </Button>
+            <Button variant="outline" className="flex-1">
+              Preview Template
+            </Button>
+            <Button variant="outline" className="flex-1">
+              Save Draft
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

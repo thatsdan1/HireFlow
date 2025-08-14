@@ -2,43 +2,54 @@ from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+from datetime import datetime
 
-class Job(Base):
-    __tablename__ = "jobs"
+class JobDescription(Base):
+    __tablename__ = "job_descriptions"
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String(255), nullable=False)
-    company = Column(String(255), nullable=False)
+    company_name = Column(String(255), nullable=False)
+    job_title = Column(String(255), nullable=False)
     
     # Job details
-    description = Column(Text, nullable=False)
-    requirements = Column(Text)
-    location = Column(String(255))
-    salary_range = Column(String(100))
-    job_type = Column(String(50))  # full-time, part-time, contract, etc.
-    
-    # Source information
-    source_url = Column(String(500))  # If scraped from job board
-    source_type = Column(String(50))  # manual, linkedin, indeed, etc.
+    description_text = Column(Text, nullable=False)
+    requirements_extracted = Column(Text)
+    job_url = Column(String(500))
     
     # AI analysis fields
-    embeddings = Column(JSON)  # Vector embeddings for semantic matching
-    skills_required = Column(JSON)  # AI-extracted required skills
-    experience_level = Column(String(50))  # entry, mid, senior, etc.
-    industry = Column(String(100))
-    
-    # Matching data
-    match_score = Column(Integer)  # 0-100 score with user's resume
-    matched_skills = Column(JSON)  # Skills that match user's resume
-    missing_skills = Column(JSON)  # Skills user lacks
+    keywords = Column(JSON)  # AI-extracted keywords
+    company_culture = Column(Text)  # AI-analyzed company culture
+    skills_to_highlight = Column(JSON)  # Skills user should emphasize
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    user = relationship("User", back_populates="jobs")
+    user = relationship("User", back_populates="job_descriptions")
     applications = relationship("Application", back_populates="job")
     
     def __repr__(self):
-        return f"<Job(id={self.id}, title='{self.title}', company='{self.company}')>" 
+        return f"<JobDescription(id={self.id}, job_title='{self.job_title}', company_name='{self.company_name}')>"
+
+
+# Pydantic schemas for API requests/responses
+class JobDescriptionCreate(BaseModel):
+    user_id: int
+    company_name: str
+    job_title: str
+    description_text: str
+    requirements_extracted: Optional[str] = None
+    job_url: Optional[str] = None
+    keywords: Optional[Dict[str, Any]] = None
+    company_culture: Optional[str] = None
+    skills_to_highlight: Optional[Dict[str, Any]] = None
+
+class JobDescriptionUpdate(BaseModel):
+    description_text: Optional[str] = None
+    requirements_extracted: Optional[str] = None
+    keywords: Optional[Dict[str, Any]] = None
+    company_culture: Optional[str] = None
+    skills_to_highlight: Optional[Dict[str, Any]] = None 

@@ -3,46 +3,50 @@ from typing import List
 import os
 
 class Settings(BaseSettings):
-    # API Configuration
-    API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "HireFlow"
+    # Database - Use SQLite for development, Supabase for production
+    DATABASE_URL: str = "sqlite:///./hireflow.db"
     
     # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str = "your-secret-key-here"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # Database (SQLite for development, PostgreSQL for production)
-    DATABASE_URL: str = "sqlite:///./hireflow.db"
-    
     # CORS
     ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",  # React dev server
-        "http://localhost:8000",  # FastAPI dev server
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001"
     ]
     
     # OpenAI Configuration
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4"
+    OPENAI_MAX_TOKENS: int = 2000
+    OPENAI_TEMPERATURE: float = 0.7
     
     # Pinecone Configuration
     PINECONE_API_KEY: str = ""
     PINECONE_ENVIRONMENT: str = ""
-    PINECONE_INDEX_NAME: str = "hireflow-embeddings"
+    
+    # AI Service Configuration
+    AI_SERVICE_ENABLED: bool = True
+    AI_RATE_LIMIT: int = 100  # requests per hour per user
+    AI_MAX_CONCURRENT_REQUESTS: int = 10
     
     # File Upload
-    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     UPLOAD_DIR: str = "uploads"
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_FILE_TYPES: List[str] = [".pdf", ".docx", ".txt"]
     
-    # AI Processing
-    MAX_TOKENS: int = 4000
-    TEMPERATURE: float = 0.7
+    # Environment
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
     
     class Config:
         env_file = ".env"
-        case_sensitive = True
+        case_sensitive = False
 
-# Create settings instance
 settings = Settings()
 
 # Ensure upload directory exists
