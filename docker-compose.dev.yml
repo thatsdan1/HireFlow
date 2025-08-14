@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Development)
+  postgres:
+    image: postgres:15-alpine
+    container_name: hireflow_postgres_dev
+    environment:
+      POSTGRES_DB: hireflow_dev
+      POSTGRES_USER: hireflow_user
+      POSTGRES_PASSWORD: hireflow_password
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hireflow_user -d hireflow_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hireflow_network_dev
+
+  # Redis for caching and sessions (Development)
+  redis:
+    image: redis:7-alpine
+    container_name: hireflow_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hireflow_network_dev
+
+  # Backend FastAPI Service (Development with hot reload)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend.dev
+    container_name: hireflow_backend_dev
+    environment:
+      - DATABASE_URL=postgresql://hireflow_user:hireflow_password@postgres:5432/hireflow_dev
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+      - ./backend/.env:/app/.env:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    networks:
+      - hireflow_network_dev
+    restart: unless-stopped
+
+  # Frontend React Service (Development with hot reload)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.dev
+    container_name: hireflow_frontend_dev
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./hireflow-frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: ["npm", "start"]
+    networks:
+      - hireflow_network_dev
+    restart: unless-stopped
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+
+networks:
+  hireflow_network_dev:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

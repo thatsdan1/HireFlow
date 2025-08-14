@@ -1,0 +1,38 @@
+# Local development overrides
+# This file is automatically loaded by docker-compose
+version: '3.8'
+
+services:
+  # Override backend for local development
+  backend:
+    environment:
+      - DATABASE_URL=postgresql://hireflow_user:hireflow_password@postgres:5432/hireflow_dev
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Override frontend for local development
+  frontend:
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./hireflow-frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    command: ["npm", "start"]
+
+  # Override postgres for local development
+  postgres:
+    environment:
+      - POSTGRES_DB=hireflow_dev
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+volumes:
+  postgres_data_dev:
+    driver: local
